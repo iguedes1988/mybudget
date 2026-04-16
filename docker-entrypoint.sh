@@ -23,13 +23,9 @@ echo "▶ Applying database schema..."
 node -e "
 const { execSync } = require('child_process');
 try {
-  execSync('node_modules/.bin/prisma db push --skip-generate --accept-data-loss', { stdio: 'inherit', env: { ...process.env, PATH: process.env.PATH } });
+  execSync('node node_modules/prisma/build/index.js db push --skip-generate --accept-data-loss', { stdio: 'inherit', env: { ...process.env, PATH: process.env.PATH } });
 } catch (e) {
-  try {
-    execSync('npx prisma@5 db push --skip-generate --accept-data-loss', { stdio: 'inherit' });
-  } catch (e2) {
-    console.error('Warning: Could not apply schema. DB may already be set up.');
-  }
+  console.error('Warning: Could not apply schema. DB may already be set up.');
 }
 "
 
