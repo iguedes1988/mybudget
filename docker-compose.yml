@@ -1,0 +1,71 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LOCAL DEVELOPMENT ONLY
+# Production runs on Spaceship Starlight Hyperlift.
+# Set all environment variables in the Hyperlift Manager dashboard.
+#
+# DATABASE MODE (set in .env):
+#   Local postgres  → leave DB_PASS_B64 and SUPABASE_PROJECT_REF empty
+#   Supabase cloud  → set DB_PASS_B64, SUPABASE_PROJECT_REF, SUPABASE_REGION
+# ─────────────────────────────────────────────────────────────────────────────
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mybudget-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-localbudget}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-localbudget_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-localbudget}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-localbudget} -d ${POSTGRES_DB:-localbudget}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mybudget-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # ── Local postgres fallback (used when Supabase vars are not set) ──
+      DATABASE_URL: postgresql://${POSTGRES_USER:-localbudget}:${POSTGRES_PASSWORD:-localbudget_secret}@postgres:5432/${POSTGRES_DB:-localbudget}
+      # ── Supabase cloud (entrypoint constructs real URLs when these are set) ──
+      DB_PASS_B64: ${DB_PASS_B64:-}
+      SUPABASE_PROJECT_REF: ${SUPABASE_PROJECT_REF:-}
+      SUPABASE_REGION: ${SUPABASE_REGION:-aws-1-us-east-1}
+      # ── Auth ──
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-this-to-a-random-secret-min-32-chars}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:8080}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      AUTH_TRUST_HOST: "true"
+      # ── Seed ──
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@mybudget.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin@123456}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrator}
+      # ── SMTP ──
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_SECURE: ${SMTP_SECURE:-true}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS_B64: ${SMTP_PASS_B64:-}
+      FROM_EMAIL: ${FROM_EMAIL:-}
+      CONTACT_RECIPIENT_EMAIL: ${CONTACT_RECIPIENT_EMAIL:-}
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads:/app/uploads
+
+volumes:
+  postgres_data:
+  uploads:

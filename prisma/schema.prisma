@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")  // pooler (PgBouncer) — app queries
+  directUrl = env("DIRECT_URL")   // direct connection — prisma db push
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AccountType {
+  PERSONAL
+  TEAM
+  FAMILY
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+model User {
+  id          String      @id @default(cuid())
+  email       String      @unique
+  name        String
+  password    String
+  role        Role        @default(USER)
+  accountType AccountType @default(PERSONAL)
+  suspended   Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Team membership
+  teamId String?
+  team   Team?   @relation("TeamMembers", fields: [teamId], references: [id])
+
+  // Email verification
+  emailVerified           Boolean   @default(false)
+  verificationToken       String?   @unique
+  verificationTokenExpiry DateTime?
+
+  // Preferences
+  incomeEnabled      Boolean     @default(false)
+  pendingDeletion    Boolean     @default(false)
+  deletionScheduledAt DateTime?
+
+  // Relations
+  expenses       Expense[]        @relation("UserExpenses")
+  createdExpenses Expense[]       @relation("ExpenseCreator")
+  incomes        Income[]         @relation("UserIncomes")
+  createdIncomes Income[]         @relation("IncomeCreator")
+  ownedTeams     Team[]           @relation("TeamOwner")
+  teamMemberships TeamMember[]
+  sentInvitations TeamInvitation[]
+
+  @@index([email])
+  @@index([role])
+  @@index([teamId])
+}
+
+model Team {
+  id        String      @id @default(cuid())
+  name      String
+  type      AccountType
+  ownerId   String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  owner       User             @relation("TeamOwner", fields: [ownerId], references: [id])
+  members     TeamMember[]
+  invitations TeamInvitation[]
+  expenses    Expense[]        @relation("TeamExpenses")
+  incomes     Income[]         @relation("TeamIncomes")
+  users       User[]           @relation("TeamMembers")
+
+  @@index([ownerId])
+}
+
+model TeamMember {
+  id       String   @id @default(cuid())
+  teamId   String
+  userId   String
+  joinedAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+}
+
+model TeamInvitation {
+  id          String       @id @default(cuid())
+  teamId      String
+  email       String
+  invitedById String
+  status      InviteStatus @default(PENDING)
+  token       String       @unique @default(cuid())
+  expiresAt   DateTime
+  createdAt   DateTime     @default(now())
+
+  team      Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  invitedBy User @relation(fields: [invitedById], references: [id])
+
+  @@index([token])
+  @@index([teamId])
+  @@index([email])
+}
+
+model Expense {
+  id        String   @id @default(cuid())
+  date      DateTime
+  category  String
+  vendor    String
+  amount    Decimal  @db.Decimal(10, 2)
+  notes     String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Team support
+  teamId      String?
+  createdById String?
+
+  user      User  @relation("UserExpenses", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("ExpenseCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  team      Team? @relation("TeamExpenses", fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+  @@index([category])
+  @@index([userId, date])
+  @@index([userId, category])
+  @@index([teamId])
+  @@index([teamId, date])
+  @@index([createdById])
+}
+
+model Income {
+  id        String   @id @default(cuid())
+  date      DateTime
+  category  String
+  source    String
+  amount    Decimal  @db.Decimal(10, 2)
+  notes     String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Team support
+  teamId      String?
+  createdById String?
+
+  user      User  @relation("UserIncomes", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("IncomeCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  team      Team? @relation("TeamIncomes", fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+  @@index([category])
+  @@index([userId, date])
+  @@index([teamId])
+  @@index([teamId, date])
+  @@index([createdById])
+}
