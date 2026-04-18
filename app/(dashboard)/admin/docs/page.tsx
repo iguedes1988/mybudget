@@ -64,9 +64,13 @@ export default async function AdminDocsPage() {
                   <td className="py-2 font-medium text-muted-foreground">Email</td>
                   <td className="py-2">Nodemailer v7, SMTP transport (Spacemail port 465 SSL)</td>
                 </tr>
+                <tr className="border-b">
+                  <td className="py-2 font-medium text-muted-foreground">Database (Cloud)</td>
+                  <td className="py-2">Supabase free tier (PostgreSQL 16) — transaction pooler port 6543 for app queries, session pooler port 5432 for schema ops</td>
+                </tr>
                 <tr>
                   <td className="py-2 font-medium text-muted-foreground">Deployment</td>
-                  <td className="py-2">Docker multi-stage build, standalone output, port 8080 (Spaceship Hyperlift)</td>
+                  <td className="py-2">GitHub Actions builds Docker image → pushes to GHCR → Spaceship Hyperlift pulls pre-built image (port 8080)</td>
                 </tr>
               </tbody>
             </table>
@@ -291,19 +295,79 @@ export default async function AdminDocsPage() {
                     <td className="py-1.5">Default: <code className="bg-muted px-0.5 rounded">true</code> (SSL). Set <code className="bg-muted px-0.5 rounded">false</code> for STARTTLS on port 587.</td>
                   </tr>
                   <tr className="border-b">
-                    <td className="py-1.5 font-mono">SMTP_USER / SMTP_PASS</td>
+                    <td className="py-1.5 font-mono">SMTP_USER</td>
                     <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Optional</Badge></td>
-                    <td className="py-1.5">SMTP authentication credentials</td>
+                    <td className="py-1.5">SMTP username (e.g. <code className="bg-muted px-0.5 rounded">admin@apphouse.app</code>)</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-1.5 font-mono">SMTP_PASS_B64</td>
+                    <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Optional</Badge></td>
+                    <td className="py-1.5">Base64-encoded SMTP password (preferred). Generate: <code className="bg-muted px-0.5 rounded">node -e &quot;console.log(Buffer.from(&apos;pass&apos;).toString(&apos;base64&apos;))&quot;</code>. Falls back to <code className="bg-muted px-0.5 rounded">SMTP_PASS</code>.</td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-1.5 font-mono">FROM_EMAIL</td>
                     <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Optional</Badge></td>
                     <td className="py-1.5">Sender address for outgoing emails. Falls back to SMTP_USER.</td>
                   </tr>
-                  <tr>
+                  <tr className="border-b">
                     <td className="py-1.5 font-mono">CONTACT_RECIPIENT_EMAIL</td>
                     <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Optional</Badge></td>
-                    <td className="py-1.5">Recipient for contact form submissions. Falls back to ADMIN_EMAIL then <code className="bg-muted px-0.5 rounded">admin@appbox.app</code>.</td>
+                    <td className="py-1.5">Recipient for contact form submissions. Falls back to ADMIN_EMAIL then <code className="bg-muted px-0.5 rounded">admin@apphouse.app</code>.</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-1.5 font-mono">DB_PASS_B64</td>
+                    <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Cloud</Badge></td>
+                    <td className="py-1.5">Base64-encoded Supabase DB password. Used by entrypoint to construct DATABASE_URL + DIRECT_URL at runtime.</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-1.5 font-mono">SUPABASE_PROJECT_REF</td>
+                    <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Cloud</Badge></td>
+                    <td className="py-1.5">Supabase project reference ID (from project URL). Used in pooler hostnames.</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-1.5 font-mono">SUPABASE_REGION</td>
+                    <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Cloud</Badge></td>
+                    <td className="py-1.5">Supabase pooler region (e.g. <code className="bg-muted px-0.5 rounded">aws-1-us-east-1</code>). Default: <code className="bg-muted px-0.5 rounded">aws-1-us-east-1</code>.</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-1.5 font-mono">RATE_LIMIT_DISABLED</td>
+                    <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Dev</Badge></td>
+                    <td className="py-1.5">Set <code className="bg-muted px-0.5 rounded">true</code> to bypass all rate limits. Local <code className="bg-muted px-0.5 rounded">.env</code> only — never set in production.</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-1.5 font-mono">RATE_LIMIT_MULTIPLIER</td>
+                    <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Dev</Badge></td>
+                    <td className="py-1.5">Multiply all rate limits by this factor (e.g. <code className="bg-muted px-0.5 rounded">10</code> for relaxed testing). Defaults to 1.</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-1.5 font-mono">RATE_LIMIT_LOGIN_MAX</td>
+                    <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Optional</Badge></td>
+                    <td className="py-1.5">Max login attempts per IP per window. Default: <code className="bg-muted px-0.5 rounded">10</code>.</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-1.5 font-mono">RATE_LIMIT_LOGIN_WINDOW_MS</td>
+                    <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Optional</Badge></td>
+                    <td className="py-1.5">Login rate limit window in ms. Default: <code className="bg-muted px-0.5 rounded">900000</code> (15 min).</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-1.5 font-mono">RATE_LIMIT_REGISTER_MAX</td>
+                    <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Optional</Badge></td>
+                    <td className="py-1.5">Max registration attempts per IP per window. Default: <code className="bg-muted px-0.5 rounded">5</code>.</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-1.5 font-mono">RATE_LIMIT_REGISTER_WINDOW_MS</td>
+                    <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Optional</Badge></td>
+                    <td className="py-1.5">Registration rate limit window in ms. Default: <code className="bg-muted px-0.5 rounded">3600000</code> (60 min).</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-1.5 font-mono">RATE_LIMIT_CONTACT_MAX</td>
+                    <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Optional</Badge></td>
+                    <td className="py-1.5">Max contact form submissions per IP per window. Default: <code className="bg-muted px-0.5 rounded">5</code>.</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1.5 font-mono">RATE_LIMIT_CONTACT_WINDOW_MS</td>
+                    <td className="py-1.5"><Badge variant="outline" className="text-[10px] px-1 py-0">Optional</Badge></td>
+                    <td className="py-1.5">Contact form rate limit window in ms. Default: <code className="bg-muted px-0.5 rounded">3600000</code> (60 min).</td>
                   </tr>
                 </tbody>
               </table>
@@ -318,24 +382,44 @@ export default async function AdminDocsPage() {
           </CardHeader>
           <CardContent className="text-sm space-y-3">
             <div>
-              <p className="font-semibold mb-1">Build Process</p>
+              <p className="font-semibold mb-1">Two-Dockerfile Setup</p>
               <p className="text-muted-foreground text-xs">
-                Multi-stage Dockerfile: <strong>deps</strong> (npm ci + prisma generate via postinstall) → <strong>builder</strong> (prisma generate + next build + compile seed.ts → prisma/dist/seed.js) → <strong>runner</strong> (standalone output, non-root <code className="bg-muted px-1 rounded">nextjs</code> user, port <strong>8080</strong>).
+                <code className="bg-muted px-1 rounded">Dockerfile.build</code> — full multi-stage build (deps → builder → runner). Used by GitHub Actions on a 7 GB RAM runner. <code className="bg-muted px-1 rounded">Dockerfile</code> — single line (<code className="bg-muted px-1 rounded">FROM ghcr.io/iguedes1988/mybudget:latest</code>). Used by Hyperlift to pull the pre-built image — no compilation, minimal memory needed.
+              </p>
+            </div>
+            <div>
+              <p className="font-semibold mb-1">CI/CD Flow (GitHub Actions → GHCR → Hyperlift)</p>
+              <div className="bg-muted rounded-lg p-3 font-mono text-xs space-y-1">
+                <p>1. git push origin main</p>
+                <p>2. GitHub Actions: docker build -f Dockerfile.build → push to ghcr.io/iguedes1988/mybudget:latest</p>
+                <p>3. Hyperlift: click Build → pulls pre-built image from GHCR → deploys</p>
+              </div>
+              <p className="text-muted-foreground text-xs mt-2">
+                ⚠️ The GHCR package must be set to <strong>Public</strong> visibility (github.com/iguedes1988 → Packages → mybudget → Package settings → Change visibility). Hyperlift pulls anonymously.
               </p>
             </div>
             <div>
               <p className="font-semibold mb-1">Startup (docker-entrypoint.sh)</p>
               <p className="text-muted-foreground text-xs">
-                On every container start: runs <code className="bg-muted px-1 rounded">prisma db push --skip-generate --accept-data-loss</code> to sync schema, then seeds the admin/demo users if not present, then <code className="bg-muted px-1 rounded">exec node server.js</code>.
+                On every container start: decodes <code className="bg-muted px-1 rounded">DB_PASS_B64</code> + constructs Supabase URLs if <code className="bg-muted px-1 rounded">SUPABASE_PROJECT_REF</code> is set, then runs <code className="bg-muted px-1 rounded">node node_modules/prisma/build/index.js db push</code> to sync schema, seeds admin/demo users if not present, then <code className="bg-muted px-1 rounded">exec node server.js</code>.
+              </p>
+            </div>
+            <div>
+              <p className="font-semibold mb-1">Supabase Cloud DB</p>
+              <p className="text-muted-foreground text-xs">
+                Free tier uses PgBouncer pooler (IPv4 compatible). Two connection URLs are constructed at runtime by the entrypoint:<br/>
+                • <strong>DATABASE_URL</strong>: transaction pooler port <code className="bg-muted px-1 rounded">6543</code> + <code className="bg-muted px-1 rounded">?pgbouncer=true</code> — for all app queries.<br/>
+                • <strong>DIRECT_URL</strong>: session pooler port <code className="bg-muted px-1 rounded">5432</code> — for Prisma schema push (bypasses PgBouncer DDL limitation).<br/>
+                Passwords containing special characters (e.g. <code className="bg-muted px-1 rounded">@</code>) are URL-encoded automatically via <code className="bg-muted px-1 rounded">encodeURIComponent()</code>.
               </p>
             </div>
             <div>
               <p className="font-semibold mb-1">Spaceship Hyperlift</p>
               <p className="text-muted-foreground text-xs mb-1">
-                Production runs on Spaceship Starlight Hyperlift (pure Docker PaaS). All env vars are set in the Hyperlift dashboard — no docker-compose in production.
+                Production runs on Spaceship Starlight Hyperlift Micro (0.25 vCPU / 0.5 GiB RAM). All env vars are set in the Hyperlift dashboard — no docker-compose in production.
               </p>
               <p className="text-muted-foreground text-xs">
-                Domain: <code className="bg-muted px-1 rounded">mybudget.apphouse.app</code> · Set <code className="bg-muted px-1 rounded">NEXTAUTH_URL=https://mybudget.apphouse.app</code>
+                Domain: <code className="bg-muted px-1 rounded">mybudget.apphouse.app</code> · DNS: CNAME <code className="bg-muted px-1 rounded">mybudget</code> → <code className="bg-muted px-1 rounded">ingress-vorlis.hyperlift.io</code>
               </p>
             </div>
             <div>
@@ -347,6 +431,9 @@ export default async function AdminDocsPage() {
                 <p>docker compose logs -f app</p>
                 <p className="pt-1"># Full reset (drops DB volume)</p>
                 <p>docker compose down -v &amp;&amp; docker compose up -d --build</p>
+                <p className="pt-1"># Push to Supabase (set env vars first)</p>
+                <p>. .\scripts\set-db-env.ps1  # Windows</p>
+                <p>npx prisma db push</p>
               </div>
             </div>
             <div>
@@ -369,8 +456,11 @@ export default async function AdminDocsPage() {
           <CardContent className="text-sm space-y-3">
             <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
               <p className="font-semibold text-amber-600 dark:text-amber-400 mb-1">Rate Limiting: In-Memory</p>
-              <p className="text-muted-foreground text-xs">
+              <p className="text-muted-foreground text-xs mb-2">
                 <code className="bg-muted px-1 rounded">lib/rate-limit.ts</code> uses an in-memory Map. Works for single-instance Docker but does not persist across restarts or replicas. For multi-instance deployments, replace with Redis or Upstash.
+              </p>
+              <p className="text-muted-foreground text-xs">
+                <strong>During local testing:</strong> add <code className="bg-muted px-1 rounded">RATE_LIMIT_DISABLED=true</code> to your <code className="bg-muted px-1 rounded">.env</code> to bypass all limits. For relaxed (not disabled) limits use <code className="bg-muted px-1 rounded">RATE_LIMIT_MULTIPLIER=10</code>. Never set these in Hyperlift production env vars.
               </p>
             </div>
             <div className="rounded-lg border p-3">

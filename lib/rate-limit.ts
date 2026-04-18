@@ -23,18 +23,27 @@ export function rateLimit(
   limit: number,
   windowMs: number
 ): { success: boolean; remaining: number } {
+  // Allow full bypass for local testing (RATE_LIMIT_DISABLED=true)
+  if (process.env.RATE_LIMIT_DISABLED === "true") {
+    return { success: true, remaining: 999 };
+  }
+
+  // Optionally scale all limits by a multiplier (e.g. RATE_LIMIT_MULTIPLIER=10)
+  const multiplier = Math.max(1, Number(process.env.RATE_LIMIT_MULTIPLIER) || 1);
+  const effectiveLimit = limit * multiplier;
+
   const now = Date.now();
   const entry = store.get(key);
 
   if (!entry || entry.resetAt < now) {
     store.set(key, { count: 1, resetAt: now + windowMs });
-    return { success: true, remaining: limit - 1 };
+    return { success: true, remaining: effectiveLimit - 1 };
   }
 
-  if (entry.count >= limit) {
+  if (entry.count >= effectiveLimit) {
     return { success: false, remaining: 0 };
   }
 
   entry.count++;
-  return { success: true, remaining: limit - entry.count };
+  return { success: true, remaining: effectiveLimit - entry.count };
 }

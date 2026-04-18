@@ -24,9 +24,11 @@ export async function loginAction(formData: FormData) {
   const password = formData.get("password") as string;
   const callbackUrl = (formData.get("callbackUrl") as string) || "/dashboard";
 
-  // Rate limit: 10 login attempts per 15 minutes per IP
+  // Rate limit: 10 login attempts per 15 minutes per IP (configurable via env)
   const ip = getClientIp();
-  const { success } = rateLimit(`login:${ip}`, 10, 15 * 60 * 1000);
+  const loginMax = Number(process.env.RATE_LIMIT_LOGIN_MAX) || 10;
+  const loginWindow = Number(process.env.RATE_LIMIT_LOGIN_WINDOW_MS) || 15 * 60 * 1000;
+  const { success } = rateLimit(`login:${ip}`, loginMax, loginWindow);
   if (!success) {
     return { error: "Too many login attempts. Please try again in 15 minutes." };
   }
@@ -51,9 +53,11 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function registerAction(formData: FormData) {
-  // Rate limit: 5 registrations per hour per IP
+  // Rate limit: 5 registrations per hour per IP (configurable via env)
   const ip = getClientIp();
-  const { success } = rateLimit(`register:${ip}`, 5, 60 * 60 * 1000);
+  const registerMax = Number(process.env.RATE_LIMIT_REGISTER_MAX) || 5;
+  const registerWindow = Number(process.env.RATE_LIMIT_REGISTER_WINDOW_MS) || 60 * 60 * 1000;
+  const { success } = rateLimit(`register:${ip}`, registerMax, registerWindow);
   if (!success) {
     return { error: "Too many registration attempts. Please try again later." };
   }

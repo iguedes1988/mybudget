@@ -23,9 +23,11 @@ function getClientIp(): string {
 }
 
 export async function submitContactForm(formData: FormData) {
-  // Rate limit: 5 submissions per hour per IP
+  // Rate limit: 5 submissions per hour per IP (configurable via env)
   const ip = getClientIp();
-  const { success } = rateLimit(`contact:${ip}`, 5, 60 * 60 * 1000);
+  const contactMax = Number(process.env.RATE_LIMIT_CONTACT_MAX) || 5;
+  const contactWindow = Number(process.env.RATE_LIMIT_CONTACT_WINDOW_MS) || 60 * 60 * 1000;
+  const { success } = rateLimit(`contact:${ip}`, contactMax, contactWindow);
   if (!success) {
     return { error: "Too many submissions. Please try again later." };
   }
