@@ -172,6 +172,29 @@ export function RegisterForm() {
 
         <input type="hidden" name="accountType" value={accountType} />
 
+        {/* Terms acceptance */}
+        <div className="flex items-start gap-2.5">
+          <input
+            type="checkbox"
+            id="termsAccepted"
+            name="termsAccepted"
+            value="true"
+            required
+            disabled={isPending}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border border-input accent-primary cursor-pointer"
+          />
+          <label htmlFor="termsAccepted" className="text-sm text-muted-foreground leading-snug cursor-pointer">
+            I agree to the{" "}
+            <Link href="/terms" target="_blank" className="underline text-foreground hover:text-primary transition-colors">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" target="_blank" className="underline text-foreground hover:text-primary transition-colors">
+              Privacy Policy
+            </Link>
+          </label>
+        </div>
+
         <Button type="submit" className="w-full" disabled={isPending}>
           {isPending ? (
             <>

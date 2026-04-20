@@ -69,6 +69,7 @@ export async function registerAction(formData: FormData) {
     confirmPassword: formData.get("confirmPassword") as string,
     accountType: (formData.get("accountType") as string) || "PERSONAL",
     teamName: (formData.get("teamName") as string) || undefined,
+    termsAccepted: formData.get("termsAccepted") === "true" ? (true as const) : (false as unknown as true),
   };
 
   const parsed = registerSchema.safeParse(raw);

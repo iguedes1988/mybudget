@@ -17,6 +17,9 @@ export const registerSchema = z
     confirmPassword: z.string(),
     accountType: z.enum(["PERSONAL", "TEAM", "FAMILY"]).default("PERSONAL"),
     teamName: z.string().optional(),
+    termsAccepted: z.literal(true, {
+      errorMap: () => ({ message: "You must accept the Terms of Service to continue" }),
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
