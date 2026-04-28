@@ -80,6 +80,7 @@ export function Sidebar({ isAdmin, hasTeam, incomeEnabled, userName, userEmail }
               <Link
                 key={item.name}
                 href={item.href}
+                prefetch={false}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -96,6 +97,7 @@ export function Sidebar({ isAdmin, hasTeam, incomeEnabled, userName, userEmail }
           {incomeEnabled ? (
             <Link
               href="/income"
+              prefetch={false}
               onClick={() => setMobileOpen(false)}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -201,6 +203,7 @@ export function Sidebar({ isAdmin, hasTeam, incomeEnabled, userName, userEmail }
         <div className="space-y-1">
           <Link
             href="/settings"
+            prefetch={false}
             onClick={() => setMobileOpen(false)}
             className={cn(
               "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors w-full",

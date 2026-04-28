@@ -6,6 +6,11 @@ Read CLAUDE.md first. This file documents recent work and open items.
 
 ## Last Session — What Was Done
 
+### 429 on fast sidebar navigation — FIXED
+**Problem**: Navigating quickly between menu items (Dashboard, Expenses, Settings, etc.) triggers a Hyperlift WAF `429 Too Many Requests` HTML page.
+**Root cause**: Next.js App Router automatically prefetches all visible `<Link>` components on viewport entry. The sidebar is always fully visible — 11 links = 11 simultaneous prefetch requests on every page load. Fast navigation multiplies this. Hyperlift's WAF sees a burst from one IP and blocks it.
+**Fix applied**: Added `prefetch={false}` to all 11 `<Link>` components in `components/layout/sidebar.tsx`. Pages still load instantly on click via the Next.js router cache; no background burst is fired.
+
 ### Sign-out error fixed
 **Problem**: "Something went wrong — An unexpected error occurred" on sign-out.
 **Root cause A**: Auth.js v5 beta — `signOut({ redirectTo })` throws a redirect that React error boundary catches as a real error.

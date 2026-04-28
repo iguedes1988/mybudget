@@ -136,6 +136,11 @@ Store secrets in: Hyperlift dashboard → Environment variables.
 - `RATE_LIMIT_DISABLED=true` in local `.env` for testing. **Never set in production.**
 - Production 429 errors that show an HTML page with "influx of requests" are from **Hyperlift's WAF**, not our app. Contact Spaceship support to adjust threshold.
 
+### Sidebar prefetch — always keep `prefetch={false}`
+All `<Link>` components in `components/layout/sidebar.tsx` **must** include `prefetch={false}`.
+The sidebar is always fully visible, so Next.js would fire a prefetch request for every link simultaneously on every page load. With 11 links that's 11 concurrent requests per navigation — enough to trigger Hyperlift's WAF and return 429 to the user.
+`prefetch={false}` disables this; pages still load instantly on click via the router cache.
+
 ### Supabase (cloud DB)
 - `DATABASE_URL`: transaction pooler port 6543, `?pgbouncer=true`
 - `DIRECT_URL`: session pooler port 5432 — for `prisma db push`
