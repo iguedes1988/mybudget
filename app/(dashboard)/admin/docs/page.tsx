@@ -534,6 +534,111 @@ export default async function AdminDocsPage() {
           </CardContent>
         </Card>
 
+        {/* Lessons Learned */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              Lessons Learned
+              <Badge variant="secondary">Post-mortem</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm space-y-5">
+
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+              <p className="font-semibold text-destructive mb-1">🔴 Next.js Link Prefetch → Hyperlift WAF 429</p>
+              <p className="text-muted-foreground text-xs mb-2">
+                <strong>Symptom:</strong> Users got a Hyperlift HTML 429 page (&quot;sudden influx of requests&quot;) when navigating between sidebar items, loading the expenses list, or registering as a Personal account — but not when registering as Team/Family.
+              </p>
+              <p className="text-muted-foreground text-xs mb-2">
+                <strong>Root cause:</strong> Next.js App Router automatically prefetches every visible <code className="bg-muted px-1 rounded">&lt;Link&gt;</code> component when it enters the viewport. The sidebar is always fully rendered — 11 links × every page load = 11 concurrent prefetch requests before the user has clicked anything. The expense table compounds this: one edit link per row means a page with 25 expenses fires 25 more requests the moment it renders. The Hyperlift WAF rate-limits per IP and counts all requests, including prefetches.
+              </p>
+              <p className="text-muted-foreground text-xs mb-2">
+                <strong>Why PERSONAL registration was worse:</strong> The Personal account form has fewer fields (no team name required) so users submit faster. By the time a Team/Family user finishes typing the team name, the WAF&apos;s short window has reset. The Personal user submits while the window primed by the auth layout&apos;s 5 prefetch requests is still active.
+              </p>
+              <p className="text-muted-foreground text-xs mb-2">
+                <strong>Fix:</strong> Added <code className="bg-muted px-1 rounded">prefetch={"{false}"}</code> to <em>every</em> <code className="bg-muted px-1 rounded">&lt;Link&gt;</code> component across the entire codebase — sidebar, all table rows, auth layout footer, public layout, error pages, form links. Pages still navigate instantly on click via the router cache; only the silent background pre-request is suppressed.
+              </p>
+              <p className="text-xs font-medium text-destructive">
+                Rule: All &lt;Link&gt; components in this project must include <code className="bg-muted px-1 rounded">prefetch={"{false}"}</code>. This is a hard requirement due to Hyperlift WAF sensitivity.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+              <p className="font-semibold text-amber-600 dark:text-amber-400 mb-1">🟡 Hyperlift OOM on Build (0.5 GiB RAM)</p>
+              <p className="text-muted-foreground text-xs mb-2">
+                <strong>Symptom:</strong> Hyperlift build step failed with out-of-memory during <code className="bg-muted px-1 rounded">next build</code>. The Micro plan (0.5 GiB) cannot run the Next.js compiler.
+              </p>
+              <p className="text-muted-foreground text-xs">
+                <strong>Fix:</strong> Moved the build to GitHub Actions (7 GB RAM runner) using <code className="bg-muted px-1 rounded">Dockerfile.build</code>. The built image is pushed to GHCR (<code className="bg-muted px-1 rounded">ghcr.io/iguedes1988/mybudget:latest</code>). Hyperlift now uses a 1-line <code className="bg-muted px-1 rounded">Dockerfile</code> (<code className="bg-muted px-1 rounded">FROM ghcr.io/...</code>) to pull the pre-built image — no compilation, minimal memory.
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-4 space-y-3">
+              <p className="font-semibold mb-1">🟡 GHCR Package Must Be Public</p>
+              <p className="text-muted-foreground text-xs">
+                <strong>Symptom:</strong> Hyperlift reported <code className="bg-muted px-1 rounded">403 Forbidden</code> / <code className="bg-muted px-1 rounded">DENIED</code> when pulling the image.
+                <strong className="ml-1">Root cause:</strong> GitHub Container Registry packages default to private. Hyperlift pulls anonymously (no credentials).
+                <strong className="ml-1">Fix:</strong> GitHub → Profile → Packages → mybudget → Package settings → Change visibility → Public.
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-4">
+              <p className="font-semibold mb-1">🟡 Empty <code className="bg-muted px-1 rounded text-sm font-mono">public/</code> Directory Not Tracked by Git</p>
+              <p className="text-muted-foreground text-xs">
+                <strong>Symptom:</strong> <code className="bg-muted px-1 rounded">Dockerfile.build</code> builder stage failed with &quot;COPY failed: no such file or directory: public/&quot;.
+                <strong className="ml-1">Root cause:</strong> Git does not track empty directories. The <code className="bg-muted px-1 rounded">public/</code> folder was empty and absent in the cloned repo inside Docker.
+                <strong className="ml-1">Fix:</strong> Added <code className="bg-muted px-1 rounded">RUN mkdir -p public</code> before the COPY step in <code className="bg-muted px-1 rounded">Dockerfile.build</code>.
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-4">
+              <p className="font-semibold mb-1">🟡 Prisma WASM Not Found in Standalone Runner</p>
+              <p className="text-muted-foreground text-xs">
+                <strong>Symptom:</strong> Container startup failed with <code className="bg-muted px-1 rounded">prisma_schema_build_bg.wasm: No such file or directory</code> when running <code className="bg-muted px-1 rounded">prisma db push</code>.
+                <strong className="ml-1">Root cause:</strong> The Next.js standalone output copies only files referenced at build time. <code className="bg-muted px-1 rounded">.bin/prisma</code> is a shim that relies on WASM files that are not copied.
+                <strong className="ml-1">Fix:</strong> Changed <code className="bg-muted px-1 rounded">docker-entrypoint.sh</code> to call <code className="bg-muted px-1 rounded">node node_modules/prisma/build/index.js db push</code> instead of <code className="bg-muted px-1 rounded">prisma db push</code>.
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-4">
+              <p className="font-semibold mb-1">🟡 Auth.js v5 Beta — <code className="bg-muted px-1 rounded text-sm font-mono">signOut</code> Throws Redirect</p>
+              <p className="text-muted-foreground text-xs">
+                <strong>Symptom:</strong> Clicking Sign Out showed &quot;Something went wrong — An unexpected error occurred&quot; on the error boundary page.
+                <strong className="ml-1">Root cause:</strong> In Auth.js v5 beta, <code className="bg-muted px-1 rounded">signOut({"{ redirectTo }"})</code> throws a <code className="bg-muted px-1 rounded">NEXT_REDIRECT</code> error internally. When called from a Server Action, React&apos;s error boundary catches this throw as a real error.
+                <strong className="ml-1">Fix:</strong> Always call <code className="bg-muted px-1 rounded">await signOut({"{ redirect: false }"})</code> first, then <code className="bg-muted px-1 rounded">redirect(&quot;/login&quot;)</code> separately from <code className="bg-muted px-1 rounded">next/navigation</code>.
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-4">
+              <p className="font-semibold mb-1">🟡 Server Actions CSRF Rejection (allowedOrigins)</p>
+              <p className="text-muted-foreground text-xs">
+                <strong>Symptom:</strong> Users arriving via <code className="bg-muted px-1 rounded">apphouse.app</code> (root domain redirect) had Server Actions silently rejected with a CSRF error.
+                <strong className="ml-1">Root cause:</strong> <code className="bg-muted px-1 rounded">allowedOrigins</code> in <code className="bg-muted px-1 rounded">next.config.ts</code> only listed the primary subdomain. Next.js validates the <code className="bg-muted px-1 rounded">Origin</code> header on all Server Action requests.
+                <strong className="ml-1">Fix:</strong> Expanded <code className="bg-muted px-1 rounded">allowedOrigins</code> to include <code className="bg-muted px-1 rounded">mybudget.apphouse.app</code>, <code className="bg-muted px-1 rounded">apphouse.app</code>, <code className="bg-muted px-1 rounded">www.apphouse.app</code>, and localhost variants. Values are also read from <code className="bg-muted px-1 rounded">NEXTAUTH_URL</code> / <code className="bg-muted px-1 rounded">APP_URL</code> env vars.
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-4">
+              <p className="font-semibold mb-1">🟢 SSL Cert Mismatch on Initial Hyperlift Setup</p>
+              <p className="text-muted-foreground text-xs">
+                <strong>Symptom:</strong> Browser showed <code className="bg-muted px-1 rounded">NET::ERR_CERT_COMMON_NAME_INVALID</code> after adding the CNAME DNS record.
+                <strong className="ml-1">Root cause:</strong> Hyperlift bound the SSL certificate to the domain entered at instance creation time. A subsequent DNS change does not reissue the cert for the new hostname.
+                <strong className="ml-1">Fix:</strong> Recreated the Hyperlift instance with the correct subdomain (<code className="bg-muted px-1 rounded">mybudget.apphouse.app</code>) set as the primary domain from the start. Certificate was issued correctly on first deploy.
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-4">
+              <p className="font-semibold mb-1">🟢 Supabase Free Tier — Direct Connection Blocked</p>
+              <p className="text-muted-foreground text-xs">
+                <strong>Symptom:</strong> <code className="bg-muted px-1 rounded">prisma db push</code> timed out when using the direct connection hostname (<code className="bg-muted px-1 rounded">db.*.supabase.co:5432</code>).
+                <strong className="ml-1">Root cause:</strong> Supabase free tier blocks direct database connections from IPv4 addresses. Only the pooler endpoints are reachable.
+                <strong className="ml-1">Fix:</strong> Use the session pooler endpoint (port 5432, no pgbouncer flag) as <code className="bg-muted px-1 rounded">DIRECT_URL</code> for schema operations. Use the transaction pooler (port 6543, <code className="bg-muted px-1 rounded">?pgbouncer=true</code>) as <code className="bg-muted px-1 rounded">DATABASE_URL</code> for app queries.
+              </p>
+            </div>
+
+          </CardContent>
+        </Card>
+
       </div>
     </div>
   );

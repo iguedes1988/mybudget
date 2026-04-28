@@ -136,10 +136,20 @@ Store secrets in: Hyperlift dashboard → Environment variables.
 - `RATE_LIMIT_DISABLED=true` in local `.env` for testing. **Never set in production.**
 - Production 429 errors that show an HTML page with "influx of requests" are from **Hyperlift's WAF**, not our app. Contact Spaceship support to adjust threshold.
 
-### Sidebar prefetch — always keep `prefetch={false}`
-All `<Link>` components in `components/layout/sidebar.tsx` **must** include `prefetch={false}`.
-The sidebar is always fully visible, so Next.js would fire a prefetch request for every link simultaneously on every page load. With 11 links that's 11 concurrent requests per navigation — enough to trigger Hyperlift's WAF and return 429 to the user.
-`prefetch={false}` disables this; pages still load instantly on click via the router cache.
+### ALL `<Link>` components must have `prefetch={false}` — no exceptions
+Next.js App Router prefetches every visible `<Link>` on viewport entry. This is catastrophic on Hyperlift's WAF:
+- Sidebar: 11 links always visible = 11 concurrent requests on every page load
+- Expense/income tables: one edit link per row = up to 50 requests when the table renders
+- Auth layout footer: 5 links on `/login` and `/register` — caused Personal account registration to 429 more than Team/Family (fewer fields = faster submit = still within WAF window)
+
+**Every `<Link>` anywhere in the app must include `prefetch={false}`.**
+Pages navigate instantly on click via the router cache — prefetch is not needed.
+The only exception: `target="_blank"` links (open in new tab; prefetch is irrelevant).
+
+When adding any new `<Link>` component, always write:
+```tsx
+<Link href="..." prefetch={false}>
+```
 
 ### Supabase (cloud DB)
 - `DATABASE_URL`: transaction pooler port 6543, `?pgbouncer=true`

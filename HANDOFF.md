@@ -6,25 +6,42 @@ Read CLAUDE.md first. This file documents recent work and open items.
 
 ## Last Session — What Was Done
 
-### 429 on fast sidebar navigation — FIXED
-**Problem**: Navigating quickly between menu items (Dashboard, Expenses, Settings, etc.) triggers a Hyperlift WAF `429 Too Many Requests` HTML page.
-**Root cause**: Next.js App Router automatically prefetches all visible `<Link>` components on viewport entry. The sidebar is always fully visible — 11 links = 11 simultaneous prefetch requests on every page load. Fast navigation multiplies this. Hyperlift's WAF sees a burst from one IP and blocks it.
-**Fix applied**: Added `prefetch={false}` to all 11 `<Link>` components in `components/layout/sidebar.tsx`. Pages still load instantly on click via the Next.js router cache; no background burst is fired.
+### `prefetch={false}` sweep across all Link components — FIXED
+**Problem**: Multiple 429 WAF errors in production:
+- Fast sidebar navigation (11 prefetch requests per page load)
+- Loading expenses page (one prefetch per table row — up to 50 requests)
+- Adding a new expense (expenses page still fires row prefetches while form loads)
+- Personal account registration (auth layout fired 5 prefetch requests; Personal users submit faster than Team/Family users so they hit the WAF window)
 
-### Sign-out error fixed
+**Root cause**: Next.js prefetches every visible `<Link>` on viewport entry. Never one request — always a burst equal to the number of links visible at render time.
+
+**Fix applied**: Added `prefetch={false}` to all `<Link>` components across the entire codebase:
+- `components/layout/sidebar.tsx` — 11 nav links
+- `components/expenses/expense-table.tsx` — edit link per row + 2 pagination
+- `components/income/income-table.tsx` — edit link per row + 2 pagination
+- `components/admin/user-management-table.tsx` — 2 links per user row
+- `app/(auth)/layout.tsx` — 5 footer links (root cause of Personal reg 429)
+- `components/layout/footer.tsx` — 5 footer links
+- `app/(public)/layout.tsx` — 3 header links
+- All remaining pages and form components (15+ single links)
+
+**Rule going forward**: Every new `<Link>` must include `prefetch={false}`. See CLAUDE.md.
+
+### Technical docs updated + Lessons Learned section added
+- `/admin/docs` now has a full "Lessons Learned" section documenting all production issues encountered (WAF 429, Hyperlift OOM, GHCR visibility, Prisma WASM, Auth.js v5 signOut, CSRF allowedOrigins, SSL cert mismatch, Supabase free tier limits).
+
+### Sign-out error fixed (previous session)
 **Problem**: "Something went wrong — An unexpected error occurred" on sign-out.
 **Root cause A**: Auth.js v5 beta — `signOut({ redirectTo })` throws a redirect that React error boundary catches as a real error.
 **Root cause B**: `allowedOrigins` in `next.config.ts` had only one domain. Users arriving via `apphouse.app` (root) had server actions CSRF-rejected.
-
 **Fix applied**:
 - `actions/auth.ts`: changed to `signOut({ redirect: false })` then `redirect("/login")` separately.
 - `next.config.ts`: `allowedOrigins` now includes `mybudget.apphouse.app`, `apphouse.app`, `www.apphouse.app`, `localhost:3000`, `localhost:8080`.
 
-### 429 on second user login (same device)
-**Root cause**: Hyperlift's ingress WAF (`ingress-vorlis.hyperlift.io`) — not our app.
+### 429 on second user login (same device) — WAF, not our app
+**Root cause**: Hyperlift's ingress WAF (`ingress-vorlis.hyperlift.io`) — not our rate limiter.
 **Evidence**: Error HTML page says "There has been a sudden influx of requests from your IP". Our app returns JSON `{ error: "..." }`.
-**Our rate limiter**: `RATE_LIMIT_DISABLED=true` in local `.env` bypasses it locally. On Hyperlift, it uses production defaults (10 login / 15 min).
-**Action required**: Contact Spaceship/Hyperlift support to raise WAF threshold for the account, or test less aggressively in production.
+**Status**: The prefetch fix significantly reduces total request count per session, which should prevent this from triggering. Our in-app rate limiter is bypassed locally via `RATE_LIMIT_DISABLED=true`.
 
 ### Terms acceptance added
 Checkbox on register form linking to `/terms` and `/privacy`.
@@ -60,7 +77,8 @@ Last commit: sign-out fix + CLAUDE.md + HANDOFF.md
 
 | Issue | Status | Notes |
 |---|---|---|
-| Hyperlift 429 WAF | Open | Contact Spaceship support. Not fixable from code. |
+| Hyperlift 429 WAF — navigation | **Fixed** | `prefetch={false}` on all Links eliminates prefetch bursts. |
+| Hyperlift 429 WAF — login bursts | Mitigated | Prefetch fix reduces overall request density. If still triggered, contact Spaceship support to raise WAF threshold. |
 | Prisma WASM missing in runner | Mitigated | Entrypoint uses `node node_modules/prisma/build/index.js` instead of `.bin/prisma`. Falls back gracefully. |
 | Auth.js v5 still in beta | Ongoing | Upgrade to stable when released. Watch for breaking changes in session/JWT types. |
 
