@@ -4,7 +4,17 @@ const nextConfig: NextConfig = {
   output: "standalone",
   experimental: {
     serverActions: {
-      allowedOrigins: [process.env.NEXTAUTH_URL?.replace(/^https?:\/\//, "") || "localhost:3000"],
+      allowedOrigins: [
+        // Strip protocol — Next.js matches host only
+        process.env.NEXTAUTH_URL?.replace(/^https?:\/\//, ""),
+        process.env.APP_URL?.replace(/^https?:\/\//, ""),
+        // Root domain fallback (users accessing apphouse.app directly)
+        "apphouse.app",
+        "www.apphouse.app",
+        // Local dev
+        "localhost:3000",
+        "localhost:8080",
+      ].filter(Boolean) as string[],
     },
   },
   async headers() {

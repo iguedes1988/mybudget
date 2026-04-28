@@ -154,5 +154,8 @@ export async function registerAction(formData: FormData) {
 }
 
 export async function logoutAction() {
-  await signOut({ redirectTo: "/login" });
+  // Auth.js v5 beta: separating cookie-clear from redirect
+  // prevents React error boundary catching the redirect throw.
+  await signOut({ redirect: false });
+  redirect("/login");
 }
