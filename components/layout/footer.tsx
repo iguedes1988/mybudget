@@ -23,6 +23,7 @@ export function Footer() {
               <Link
                 key={link.href}
                 href={link.href}
+                prefetch={false}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 {link.name}

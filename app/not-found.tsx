@@ -17,10 +17,10 @@ export default function NotFound() {
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
         <div className="flex gap-3 justify-center">
-          <Link href="/dashboard">
+          <Link href="/dashboard" prefetch={false}>
             <Button>Go to Dashboard</Button>
           </Link>
-          <Link href="/login">
+          <Link href="/login" prefetch={false}>
             <Button variant="outline">Sign In</Button>
           </Link>
         </div>

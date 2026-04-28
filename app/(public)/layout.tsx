@@ -11,7 +11,7 @@ export default async function PublicLayout({ children }: { children: React.React
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 lg:px-8 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-bold text-sm">
+          <Link href="/" prefetch={false} className="flex items-center gap-2 font-bold text-sm">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
               <Wallet className="h-4 w-4 text-primary-foreground" />
             </div>
@@ -20,6 +20,7 @@ export default async function PublicLayout({ children }: { children: React.React
           {isLoggedIn ? (
             <Link
               href="/dashboard"
+              prefetch={false}
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
@@ -28,6 +29,7 @@ export default async function PublicLayout({ children }: { children: React.React
           ) : (
             <Link
               href="/login"
+              prefetch={false}
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />

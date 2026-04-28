@@ -209,7 +209,7 @@ export function RegisterForm() {
 
       <p className="text-center text-sm text-muted-foreground mt-6">
         Already have an account?{" "}
-        <Link href="/login" className="text-primary hover:underline font-medium">
+        <Link href="/login" prefetch={false} className="text-primary hover:underline font-medium">
           Sign in
         </Link>
       </p>

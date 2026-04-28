@@ -108,7 +108,7 @@ export function UserManagementTable({ users, currentUserId }: UserManagementTabl
                   </TableCell>
                   <TableCell>
                     {user.team ? (
-                      <Link href="/admin/teams" className="hover:underline">
+                      <Link href="/admin/teams" prefetch={false} className="hover:underline">
                         <Badge variant="outline" className="text-xs">
                           {user.team.name}
                         </Badge>
@@ -123,7 +123,7 @@ export function UserManagementTable({ users, currentUserId }: UserManagementTabl
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Link href={`/expenses?userId=${user.id}`} className="flex items-center gap-1 text-sm hover:underline">
+                    <Link href={`/expenses?userId=${user.id}`} prefetch={false} className="flex items-center gap-1 text-sm hover:underline">
                       <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
                       {user._count.expenses}
                     </Link>

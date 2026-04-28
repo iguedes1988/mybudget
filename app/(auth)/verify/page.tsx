@@ -25,7 +25,7 @@ export default async function VerifyPage({
         <p className="text-muted-foreground mb-6 text-sm">
           No verification token was provided. Please check your email for the correct link.
         </p>
-        <Link href="/login">
+        <Link href="/login" prefetch={false}>
           <Button variant="outline" size="sm">Back to Sign In</Button>
         </Link>
       </div>
@@ -42,7 +42,7 @@ export default async function VerifyPage({
         </div>
         <h2 className="text-xl font-bold mb-2">Verification Failed</h2>
         <p className="text-muted-foreground mb-6 text-sm">{result.error}</p>
-        <Link href="/login">
+        <Link href="/login" prefetch={false}>
           <Button variant="outline" size="sm">Back to Sign In</Button>
         </Link>
       </div>
@@ -58,7 +58,7 @@ export default async function VerifyPage({
       <p className="text-muted-foreground mb-6 text-sm">
         Your email address has been verified. You can now sign in to your account.
       </p>
-      <Link href="/login">
+      <Link href="/login" prefetch={false}>
         <Button size="sm">Sign In</Button>
       </Link>
     </div>

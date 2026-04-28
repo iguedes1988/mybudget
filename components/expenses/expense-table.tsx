@@ -73,7 +73,7 @@ export function ExpenseTable({
     return (
       <div className="text-center py-16 border rounded-lg bg-muted/20">
         <p className="text-muted-foreground text-sm mb-3">No expenses found</p>
-        <Link href="/expenses/new">
+        <Link href="/expenses/new" prefetch={false}>
           <Button size="sm" className="gap-2">
             <Plus className="h-4 w-4" />
             Add Expense
@@ -134,7 +134,7 @@ export function ExpenseTable({
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Link href={`/expenses/${expense.id}/edit`}>
+                      <Link href={`/expenses/${expense.id}/edit`} prefetch={false}>
                         <Button variant="ghost" size="icon" className="h-7 w-7">
                           <Edit className="h-3.5 w-3.5" />
                         </Button>
@@ -174,13 +174,13 @@ export function ExpenseTable({
             Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
           </p>
           <div className="flex gap-2">
-            <Link href={`?page=${page - 1}`} aria-disabled={page <= 1}>
+            <Link href={`?page=${page - 1}`} prefetch={false} aria-disabled={page <= 1}>
               <Button variant="outline" size="sm" disabled={page <= 1} className="gap-1">
                 <ChevronLeft className="h-3 w-3" />
                 Previous
               </Button>
             </Link>
-            <Link href={`?page=${page + 1}`} aria-disabled={page >= totalPages}>
+            <Link href={`?page=${page + 1}`} prefetch={false} aria-disabled={page >= totalPages}>
               <Button variant="outline" size="sm" disabled={page >= totalPages} className="gap-1">
                 Next
                 <ChevronRight className="h-3 w-3" />

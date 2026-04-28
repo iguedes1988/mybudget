@@ -28,7 +28,7 @@ export default function DashboardError({
       <div className="flex gap-3">
         <Button onClick={reset} size="sm">Try again</Button>
         <Button variant="outline" size="sm" asChild>
-          <Link href="/dashboard">Back to Dashboard</Link>
+          <Link href="/dashboard" prefetch={false}>Back to Dashboard</Link>
         </Button>
       </div>
       {error.digest && (

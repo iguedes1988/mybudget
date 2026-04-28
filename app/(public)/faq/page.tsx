@@ -83,7 +83,7 @@ export default function FaqPage() {
       <div className="text-center mt-10">
         <p className="text-muted-foreground text-sm">
           Still have questions?{" "}
-          <Link href="/contact" className="text-primary hover:underline font-medium">
+          <Link href="/contact" prefetch={false} className="text-primary hover:underline font-medium">
             Contact us
           </Link>
         </p>

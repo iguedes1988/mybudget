@@ -65,13 +65,13 @@ export default async function ExpensesPage({
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href={`/api/export?${exportParams}`}>
+          <Link href={`/api/export?${exportParams}`} prefetch={false}>
             <Button variant="outline" size="sm" className="gap-2">
               <Download className="h-4 w-4" />
               Export
             </Button>
           </Link>
-          <Link href="/expenses/new">
+          <Link href="/expenses/new" prefetch={false}>
             <Button size="sm" className="gap-2">
               <Plus className="h-4 w-4" />
               Add Expense

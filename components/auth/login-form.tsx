@@ -150,7 +150,7 @@ export function LoginForm({ callbackUrl, justRegistered, error: urlError, emailU
 
       <p className="text-center text-sm text-muted-foreground mt-6">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="text-primary hover:underline font-medium">
+        <Link href="/register" prefetch={false} className="text-primary hover:underline font-medium">
           Create one
         </Link>
       </p>

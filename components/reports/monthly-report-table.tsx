@@ -38,7 +38,7 @@ export function MonthlyReportTable({ report, year, yearTotal }: MonthlyReportTab
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Monthly Detail — {year}</CardTitle>
-        <Link href={`/api/export?year=${year}&format=excel`}>
+        <Link href={`/api/export?year=${year}&format=excel`} prefetch={false}>
           <Button variant="outline" size="sm" className="gap-2">
             <Download className="h-4 w-4" />
             Export Excel

@@ -63,7 +63,7 @@ export function IncomeTable({ incomes, total, page, pageSize, showMember }: Inco
     return (
       <div className="text-center py-12 border rounded-lg">
         <p className="text-muted-foreground mb-4">No income entries found.</p>
-        <Link href="/income/new">
+        <Link href="/income/new" prefetch={false}>
           <Button>Add your first income</Button>
         </Link>
       </div>
@@ -114,7 +114,7 @@ export function IncomeTable({ incomes, total, page, pageSize, showMember }: Inco
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1">
-                    <Link href={`/income/${income.id}/edit`}>
+                    <Link href={`/income/${income.id}/edit`} prefetch={false}>
                       <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Edit income">
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
@@ -156,12 +156,12 @@ export function IncomeTable({ incomes, total, page, pageSize, showMember }: Inco
           </p>
           <div className="flex gap-2">
             {page > 1 && (
-              <Link href={`/income?page=${page - 1}`}>
+              <Link href={`/income?page=${page - 1}`} prefetch={false}>
                 <Button variant="outline" size="sm">Previous</Button>
               </Link>
             )}
             {page < totalPages && (
-              <Link href={`/income?page=${page + 1}`}>
+              <Link href={`/income?page=${page + 1}`} prefetch={false}>
                 <Button variant="outline" size="sm">Next</Button>
               </Link>
             )}

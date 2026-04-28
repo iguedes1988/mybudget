@@ -34,7 +34,7 @@ export function RecentExpenses({ expenses, showMember }: RecentExpensesProps) {
         {expenses.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <p>No expenses recorded yet.</p>
-            <Link href="/expenses/new">
+            <Link href="/expenses/new" prefetch={false}>
               <Button variant="outline" size="sm" className="mt-3">
                 Add your first expense
               </Button>
@@ -85,7 +85,7 @@ export function RecentExpenses({ expenses, showMember }: RecentExpensesProps) {
       </CardContent>
       {expenses.length > 0 && (
         <CardFooter>
-          <Link href="/expenses" className="w-full">
+          <Link href="/expenses" prefetch={false} className="w-full">
             <Button variant="outline" className="w-full gap-2">
               View All Expenses
               <ArrowRight className="h-4 w-4" />
